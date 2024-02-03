@@ -92,6 +92,24 @@ xmlns:android="http://schemas.android.com/apk/res/android"
             target-dir="src/by/chemerisuk/cordova/firebase/" />
         <source-file src="src/android/FirebaseMessagingPluginService.java"
             target-dir="src/by/chemerisuk/cordova/firebase" />
+
+              <source-file src="src/android/Utils.java" target-dir="src/by/chemerisuk/cordova/firebase" />
+        <source-file src="src/android/AlertActivity.java" target-dir="src/by/chemerisuk/cordova/firebase" />
+        <source-file src="src/android/layout/activity_alert.xml" target-dir="res/layout"/>
+
+
+              <config-file target="AndroidManifest.xml" parent="/*">
+        <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+        <uses-permission android:name="android.permission.INTERNET" />
+	    <uses-permission android:name="android.permission.VIBRATE"/>
+	    <uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" />
+        <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <activity android:name="by.chemerisuk.cordova.firebase.AlertActivity" android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection" android:label="@string/app_name" android:launchMode="singleTask" android:theme="@android:style/Theme.DeviceDefault.Dialog.NoActionBar" android:exported="false">
+            </activity>
+        </config-file>
     </platform>
 
 </plugin>
