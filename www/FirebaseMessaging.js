@@ -205,3 +205,31 @@ function(options) {
         exec(resolve, reject, PLUGIN_NAME, "requestPermission", [options || {}]);
     });
 };
+
+exports.openAppStart = function openAppStart() {
+    return new Promise((resolve, reject) => {
+      exec(resolve, reject, PLUGIN_NAME, "openAppStart");
+    });
+  }
+
+  exports.isIgnoringBatteryOptimizations = function() {
+    return new Promise((resolve, reject) => {
+      exec(resolve, reject, PLUGIN_NAME, "isIgnoringBatteryOptimizations");
+    });
+  }
+exports.openBatterySettings=function() {
+    return new Promise((resolve, reject) => {
+      exec(resolve, reject, PLUGIN_NAME, "openBatterySettings");
+    });
+  }
+exports.requestOverlayPermission= function() {
+    return new Promise((resolve, reject) => {
+      exec(resolve, reject, PLUGIN_NAME, "requestOverlayPermission", []);
+    });
+  }
+
+  exports.hasOverlayPermission= function () {
+    return new Promise((resolve, reject) => {
+      exec(resolve, reject, PLUGIN_NAME, "hasOverlayPermission", []);
+    });
+  }
