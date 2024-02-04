@@ -1,8 +1,16 @@
 
 package by.chemerisuk.cordova.firebase;
 
+import static android.content.Context.POWER_SERVICE;
+import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.M;
+import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS;
+
 import android.Manifest;
+import android.app.Activity;
 import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,6 +18,8 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.core.app.NotificationManagerCompat;
@@ -25,6 +35,8 @@ import org.apache.cordova.CordovaPlugin;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import by.chemerisuk.cordova.support.CordovaMethod;
@@ -37,6 +49,12 @@ import static by.chemerisuk.cordova.support.ExecutionThread.WORKER;
 
 public class FirebaseMessagingPlugin extends ReflectiveCordovaPlugin {
     private static final String TAG = "FCMPlugin";
+    public static final String READ = Manifest.permission.SYSTEM_ALERT_WINDOW;
+    public static final int SEARCH_REQ_CODE = 0;
+    public static Activity mActivity;
+  public static Context mApplicationContext;
+    private static final int OVERLAY_REQUEST_CODE = 5;
+//    public static Utils utils;
 
     private JSONObject lastBundle;
     private boolean isBackground = false;
@@ -56,6 +74,12 @@ public class FirebaseMessagingPlugin extends ReflectiveCordovaPlugin {
         firebaseMessaging = FirebaseMessaging.getInstance();
         notificationManager = getSystemService(cordova.getActivity(), NotificationManager.class);
         lastBundle = getNotificationData(cordova.getActivity().getIntent());
+
+        mActivity = cordova.getActivity();
+        mApplicationContext = mActivity.getApplicationContext();
+//        utils = new Utils(mApplicationContext,mActivity);
+        // reset this as activity and context are available
+        Utils.isAlertActive = false;
     }
 
     @CordovaMethod(WORKER)
@@ -141,7 +165,7 @@ public class FirebaseMessagingPlugin extends ReflectiveCordovaPlugin {
         forceShow = options.optBoolean("forceShow");
         if (NotificationManagerCompat.from(context).areNotificationsEnabled()) {
             callbackContext.success();
-        } else if (Build.VERSION.SDK_INT >= 33) {
+        } else if (SDK_INT >= 33) {
             requestPermissionCallback = callbackContext;
             PermissionHelper.requestPermission(this, 0, Manifest.permission.POST_NOTIFICATIONS);
         } else {
@@ -261,4 +285,93 @@ public class FirebaseMessagingPlugin extends ReflectiveCordovaPlugin {
 
         return result;
     }
+
+  @CordovaMethod(WORKER)
+  private void hasOverlayPermission(CordovaArgs args, CallbackContext callbackContext) throws JSONException {
+    Boolean hasPermission = false;
+    if (SDK_INT >= M) {
+      hasPermission = Settings.canDrawOverlays(mApplicationContext);
+    }
+    Log.i(TAG, "hasoverlayPermission: " + hasPermission);
+    PluginResult res = new PluginResult(PluginResult.Status.OK, hasPermission);
+    callbackContext.sendPluginResult(res);
+  }
+
+
+  @CordovaMethod(WORKER)
+  private void requestOverlayPermission(CordovaArgs args, CallbackContext callbackContext) throws JSONException   {
+    if (SDK_INT >= M) {
+      if (Settings.canDrawOverlays(mApplicationContext)) {
+        return;
+      }
+      String pkgName = mActivity.getPackageName();
+      Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + pkgName));
+      mActivity.startActivity(intent);
+    }
+  }
+
+  @CordovaMethod(WORKER)
+  private void isIgnoringBatteryOptimizations(CordovaArgs args, CallbackContext callbackContext) {
+    if (SDK_INT < M)
+      return;
+    Activity activity = cordova.getActivity();
+    String pkgName = activity.getPackageName();
+    PowerManager pm = (PowerManager) getService(POWER_SERVICE);
+    boolean isIgnoring = pm.isIgnoringBatteryOptimizations(pkgName);
+    PluginResult res = new PluginResult(PluginResult.Status.OK, isIgnoring);
+    callbackContext.sendPluginResult(res);
+  }
+
+  private Object getService(String name) {
+    return mActivity.getSystemService(name);
+  }
+
+
+  @CordovaMethod(WORKER)
+  private void openBatterySettings(CordovaArgs args, CallbackContext callbackContext) {
+    if (SDK_INT < M)
+      return;
+    Intent intent = new Intent(ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+    mActivity.startActivity(intent);
+  }
+
+
+  @CordovaMethod(WORKER)
+  private void openAppStart(CordovaArgs args, CallbackContext callbackContext) {
+    PackageManager pm = mActivity.getPackageManager();
+    for (Intent intent : getAppStartIntents()) {
+      if (pm.resolveActivity(intent, MATCH_DEFAULT_ONLY) != null) {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mActivity.startActivity(intent);
+        break;
+      }
+    }
+  }
+
+  /**
+   * Returns list of all possible intents to present the app start settings.
+   */
+  private List<Intent> getAppStartIntents() {
+    return Arrays.asList(
+      new Intent().setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")),
+      new Intent().setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")),
+      new Intent().setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.appcontrol.activity.StartupAppControlActivity")),
+      new Intent().setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity")),
+      new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity")),
+      new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity")),
+      new Intent().setComponent(new ComponentName("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity")),
+      new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity")),
+      new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager")),
+      new Intent().setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity")),
+      new Intent().setComponent(new ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.autostart.AutoStartActivity")),
+      new Intent().setComponent(new ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.entry.FunctionActivity")).setData(android.net.Uri.parse("mobilemanager://function/entry/AutoStart")),
+      new Intent().setAction("com.letv.android.permissionautoboot"),
+      new Intent().setComponent(new ComponentName("com.samsung.android.sm_cn", "com.samsung.android.sm.ui.ram.AutoRunActivity")),
+      new Intent().setComponent(ComponentName.unflattenFromString("com.iqoo.secure/.MainActivity")),
+      new Intent().setComponent(ComponentName.unflattenFromString("com.meizu.safe/.permission.SmartBGActivity")),
+      new Intent().setComponent(new ComponentName("com.yulong.android.coolsafe", ".ui.activity.autorun.AutoRunListActivity")),
+      new Intent().setComponent(new ComponentName("cn.nubia.security2", "cn.nubia.security.appmanage.selfstart.ui.SelfStartActivity")),
+      new Intent().setComponent(new ComponentName("com.zui.safecenter", "com.lenovo.safecenter.MainTab.LeSafeMainActivity"))
+    );
+  }
 }
