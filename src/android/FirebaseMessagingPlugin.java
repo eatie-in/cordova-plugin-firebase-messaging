@@ -164,13 +164,21 @@ public class FirebaseMessagingPlugin extends ReflectiveCordovaPlugin {
         Context context = cordova.getActivity().getApplicationContext();
         forceShow = options.optBoolean("forceShow");
         if (NotificationManagerCompat.from(context).areNotificationsEnabled()) {
-            callbackContext.success();
+            callbackContext.success(1);
         } else if (SDK_INT >= 33) {
             requestPermissionCallback = callbackContext;
             PermissionHelper.requestPermission(this, 0, Manifest.permission.POST_NOTIFICATIONS);
         } else {
             callbackContext.error("Notifications permission is not granted");
         }
+    }
+
+
+  @CordovaMethod
+    private void areNotificationsEnabled(CordovaArgs args, CallbackContext callbackContext){
+      Context context = cordova.getActivity().getApplicationContext();
+      boolean areNotificationsEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled();
+      callbackContext.success(areNotificationsEnabled?1:0);
     }
 
     @Override
@@ -181,7 +189,7 @@ public class FirebaseMessagingPlugin extends ReflectiveCordovaPlugin {
                 return;
             }
         }
-        requestPermissionCallback.success();
+        requestPermissionCallback.success(1);
     }
 
     @Override
@@ -333,6 +341,15 @@ public class FirebaseMessagingPlugin extends ReflectiveCordovaPlugin {
       return;
     Intent intent = new Intent(ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
     mActivity.startActivity(intent);
+  }
+
+  @CordovaMethod
+  private void openNotificationSetting(CordovaArgs args, CallbackContext callbackContext){
+    Activity activity = cordova.getActivity();
+    Context context = cordova.getActivity().getApplicationContext();
+    Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+      .putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
+    activity.startActivity(intent);
   }
 
 

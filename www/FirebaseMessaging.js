@@ -233,3 +233,15 @@ exports.requestOverlayPermission= function() {
       exec(resolve, reject, PLUGIN_NAME, "hasOverlayPermission", []);
     });
   }
+
+  exports.areNotificationsEnabled =  function() {
+    return new Promise((resolve, reject) => {
+      exec(resolve, reject, PLUGIN_NAME, "areNotificationsEnabled", []);
+    });
+  }
+
+  exports.openNotificationSetting =  function() {
+    return new Promise((resolve, reject) => {
+      exec(resolve, reject, PLUGIN_NAME, "openNotificationSetting", []);
+    });
+  }
