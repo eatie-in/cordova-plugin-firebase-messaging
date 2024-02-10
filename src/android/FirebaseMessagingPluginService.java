@@ -128,26 +128,26 @@ public class FirebaseMessagingPluginService extends FirebaseMessagingService {
   @SuppressLint("MissingPermission")
   private void showNotification() {
 
-      Context context = getApplicationContext();
-    String ACTION_SNOOZE = "snooze";
-    Intent viewIntent = new Intent(this, NotificationReceiver.class);
-    viewIntent.setAction(ACTION_SNOOZE);
-    viewIntent.putExtra(EXTRA_NOTIFICATION_ID, 0);
-    PendingIntent snoozePendingIntent =
-      PendingIntent.getBroadcast(this, 0, viewIntent, PendingIntent.FLAG_IMMUTABLE);
+    //   Context context = getApplicationContext();
+    // String ACTION_SNOOZE = "snooze";
+    // Intent viewIntent = new Intent(this, NotificationReceiver.class);
+    // viewIntent.setAction(ACTION_SNOOZE);
+    // viewIntent.putExtra(EXTRA_NOTIFICATION_ID, 0);
+    // PendingIntent snoozePendingIntent =
+    //   PendingIntent.getBroadcast(this, 0, viewIntent, PendingIntent.FLAG_IMMUTABLE);
 
-    NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(
-        this,
-        NOTIFICATION_CHANNEL_ID
-      )
-      .setSmallIcon(defaultNotificationIcon)
-      .setColor(defaultNotificationColor)
-      .setContentTitle("Eatie")
-      .setContentText("New order")
-      .setPriority(NotificationCompat.PRIORITY_HIGH)
-      .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION).addAction(0,"View",snoozePendingIntent);
-    Notification notification = notificationBuilder.build();
-    notificationManager.notify(NOTIFICATION_ID, notification);
+    // NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(
+    //     this,
+    //     NOTIFICATION_CHANNEL_ID
+    //   )
+    //   .setSmallIcon(defaultNotificationIcon)
+    //   .setColor(defaultNotificationColor)
+    //   .setContentTitle("Eatie")
+    //   .setContentText("New order")
+    //   .setPriority(NotificationCompat.PRIORITY_HIGH)
+    //   .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION).addAction(0,"View",snoozePendingIntent);
+    // Notification notification = notificationBuilder.build();
+    // notificationManager.notify(NOTIFICATION_ID, notification);
   }
 
     @SuppressLint("MissingPermission")
